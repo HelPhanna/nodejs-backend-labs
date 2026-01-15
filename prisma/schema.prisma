@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Create User table
+model User {
+  id String @id @default(uuid())
+  name String 
+  email String @unique
+  password String
+
+  createAt DateTime @default(now())
+
+  // Relations
+  watchListItems watchListItem[]
+  movies Movie[] @relation("MovieCreator")
+}
+
+// Create Movie table
+model Movie {
+  id String @id @default(uuid())
+  title String 
+  overview String?
+  releaseYear Int
+  genres String[] @default([])
+  runtime Int?
+  posterUrl String?
+  createdBy String
+  createAt DateTime @default(now())
+
+  // Relations
+  watchListItems watchListItem[]
+  creator User @relation("MovieCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+}
+
+
+// Create watchListItem
+model watchListItem {
+  id       String @id @default(uuid())
+  userId   String 
+  movieId  String
+  status   watchListStatus @default(PLANNED)
+  rating   Int?
+  notes    String?
+  createAt DateTime @default(now())
+  At       DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  // Unique constraint to prevent duplicate entries
+  @@unique([userId, movieId])
+  @@map("watchListItem") // Keeps your existing table name in Neon
+}
+
+// Create watchListStatus enum
+enum watchListStatus {
+  PLANNED
+  WATCHING
+  COMPLETED
+  DROPPED
+}
+
+
+// USER -> MOVIE -> watchList
